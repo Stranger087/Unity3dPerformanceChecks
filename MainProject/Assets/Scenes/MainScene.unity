@@ -923,6 +923,7 @@ MonoBehaviour:
   - {fileID: 173625158}
   - {fileID: 420021737}
   - {fileID: 1571412635}
+  - {fileID: 1432204758}
 --- !u!1 &702896792
 GameObject:
   m_ObjectHideFlags: 0
@@ -1704,7 +1705,7 @@ GameObject:
   - component: {fileID: 1432204760}
   - component: {fileID: 1432204759}
   m_Layer: 0
-  m_Name: DC_swTexture_4096x4096_ZWriteOff
+  m_Name: DC_swTexture_ZWriteOff
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
