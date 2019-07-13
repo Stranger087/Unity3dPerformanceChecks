@@ -17,6 +17,8 @@ namespace DefaultNamespace
             SwitchWidget.OnSwitchTriggered += () => Handler_SwitchTriggered();
             SwitchWidget.OnDrawCountChanged += Handler_DrawCountChanged;
             if (OnNeedRecalculateMetrics != null) OnNeedRecalculateMetrics.Invoke();
+            
+            
         }
 
         private void Handler_DrawCountChanged() {

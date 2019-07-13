@@ -1,17 +1,21 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using DefaultNamespace;
+using DefaultNamespace.Widgets;
 using UnityEngine;
 
 public class DrawCallTestManager : BaseTestManager
 {
+    [SerializeField] private TextureCollection[] _TextureVariants;
+    [SerializeField] private string[] _AvailableShaders;
     [SerializeField] private GameObject Template1;
     [SerializeField] private GameObject Template2;
 
     private enum States
     {
         DrawDifferent,
-        DrawSame,
+        DrawIdentical,
+        DrawSameMaterial,
         DrawInSingleMesh
     }
 
@@ -24,6 +28,7 @@ public class DrawCallTestManager : BaseTestManager
 
     private Material[] _Materials;
     private bool _UseSameMaterial;
+    private int _TextureSetIndex;
 
     // Start is called before the first frame update
     protected override void OnEnable() {
@@ -36,6 +41,26 @@ public class DrawCallTestManager : BaseTestManager
         Template2.SetActive(false);
 
         SetState(States.DrawDifferent);
+
+        ChooseVariantWidget.Instance.RegisterVariation(OnTextSelected, "Texture Variants", _TextureVariants.Select(_ => _.Name).ToArray());
+        ChooseVariantWidget.Instance.RegisterVariation(OnShader1Selected, "Shader1", _AvailableShaders);
+        ChooseVariantWidget.Instance.RegisterVariation(OnShader2Selected, "Shader2", _AvailableShaders);
+    }
+
+    private void OnShader1Selected(int index) {
+        _Material1.shader = Shader.Find(_AvailableShaders[index]);
+        SetupMaterials(_State == States.DrawIdentical);
+    }
+    private void OnShader2Selected(int index) {
+        _Material2.shader = Shader.Find(_AvailableShaders[index]);
+        SetupMaterials(_State == States.DrawIdentical);
+    }
+
+    private void OnTextSelected(int i) {
+        _TextureSetIndex = i;
+        _Material1.mainTexture = _TextureVariants[i].Texutres[0];
+        _Material2.mainTexture = _TextureVariants[i].Texutres[1];
+        SetupMaterials(_State == States.DrawIdentical);
     }
 
     protected override void OnDrawsCountChanged() {
@@ -56,8 +81,18 @@ public class DrawCallTestManager : BaseTestManager
 
                 break;
 
+            case States.DrawSameMaterial:
+
+                for (int i = 0; i < DrawsCount; i++) {
+                    position.z += 0.01f;
+                    position.x = 0.5f - (float) i / DrawsCount;
+                    Graphics.DrawMesh(_Mesh, position, rotation, _Material1, 0, camera, 0);
+                }
+
+                break;
+
             case States.DrawDifferent:
-            case States.DrawSame:
+            case States.DrawIdentical:
 
                 for (int i = 0; i < DrawsCount; i++) {
                     position.z += 0.01f;
@@ -77,7 +112,7 @@ public class DrawCallTestManager : BaseTestManager
     private void SetState(States state) {
         _State = state;
         switch (_State) {
-            case States.DrawSame:
+            case States.DrawIdentical:
 
                 SetupMaterials(true);
 
@@ -136,14 +171,13 @@ public class DrawCallTestManager : BaseTestManager
         SetSwitchName(_State.ToString());
     }
 
-    private void SetupMaterials(bool useSameMaterial) {
-
+    private void SetupMaterials(bool useIdenticalMaterials) {
         if (_Materials == null || _Materials.Length < DrawsCount) {
-            _Materials=new Material[DrawsCount];
+            _Materials = new Material[DrawsCount];
         }
-        
+
         for (int i = 0; i < DrawsCount; i++) {
-            var mat = (!useSameMaterial && i % 2 == 0) ? _Material1 : _Material2;
+            var mat = (!useIdenticalMaterials && i % 2 == 0) ? _Material1 : _Material2;
             if (_Materials[i] != null) {
                 Destroy(_Materials[i]);
             }
