@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DefaultNamespace
@@ -6,8 +7,12 @@ namespace DefaultNamespace
     public abstract class BaseTestManager : MonoBehaviour
     {
 
+        //Static
         public static event Action OnNeedRecalculateMetrics;
         public static event Action<string> OnSwitchNameChanged;
+
+
+        public List<TestParameter> Parameters; 
 
         protected int DrawsCount;
         
@@ -18,8 +23,10 @@ namespace DefaultNamespace
             SwitchWidget.OnDrawCountChanged += Handler_DrawCountChanged;
             if (OnNeedRecalculateMetrics != null) OnNeedRecalculateMetrics.Invoke();
             
-            
+            SetupParameters();
         }
+
+        protected abstract void SetupParameters();
 
         private void Handler_DrawCountChanged() {
             DrawsCount = SwitchWidget.DrawCount;

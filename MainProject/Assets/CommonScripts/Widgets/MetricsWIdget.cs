@@ -55,7 +55,7 @@ public class MetricsWIdget : MonoBehaviour
             
         }
         else {
-            _Text.text = "frame time: "+ frameTime;
+            _Text.text = SystemInfo.processorFrequency+ " frame time: "+ frameTime;
         }
     }
 

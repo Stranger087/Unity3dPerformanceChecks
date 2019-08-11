@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using DefaultNamespace;
+using DefaultNamespace.Parameters;
 using DefaultNamespace.Widgets;
 using UnityEngine;
 
@@ -15,11 +17,10 @@ public class DrawCallTestManager : BaseTestManager
     {
         DrawDifferent,
         DrawIdentical,
-        DrawSameMaterial,
         DrawInSingleMesh
     }
 
-    private States _State;
+    private States _DrawMode;
 
     private Mesh _Mesh;
     private Mesh _OneDrawCallMesh;
@@ -29,6 +30,9 @@ public class DrawCallTestManager : BaseTestManager
     private Material[] _Materials;
     private bool _UseSameMaterial;
     private int _TextureSetIndex;
+    private string _TextureSizeKey;
+    private string _ShaderKey;
+    private bool _ZcullingOn;
 
     // Start is called before the first frame update
     protected override void OnEnable() {
@@ -47,25 +51,100 @@ public class DrawCallTestManager : BaseTestManager
         ChooseVariantWidget.Instance.RegisterVariation(OnShader2Selected, "Shader2", _AvailableShaders);
     }
 
+    protected override void SetupParameters() {
+        Parameters.Add(new NumberParameter() {
+            Name = "DrawCalls Count",
+            Min = 1,
+            Max = 5000,
+            Value = 50,
+            Precision = 1,
+            OnChanged = Handler_DrawcallsCountChanged
+        });
+        
+        Parameters.Add(new VariantParameter<States>() {
+            Name = "Draw Mode",
+            Variants = ((States[])Enum.GetValues(typeof(States))).ToList(),
+            OnChanged = Handler_DrawModeChanged
+        });
+
+        Parameters.Add(new FlagParameter() {
+            Name = "Z Culling",
+            Checked = true,
+            OnChanged = Handler_ZCullingChanged
+        });
+
+        Parameters.Add(new VariantParameter<string>() {
+            Name = "Shader",
+            Variants = new List<string>() {
+                "Unlit",
+                "Standard"
+            },
+            OnChanged = Handler_ShaderChanged
+        });
+
+        Parameters.Add(new VariantParameter<string>() {
+            Name = "Texture Size",
+            Variants = {
+                "256x256",
+                "2048x2048",
+                "4096x4096"
+            },
+            OnChanged = Handler_TextureSizeChanged
+        });
+    }
+
+    private void Handler_DrawModeChanged(States drawMode) {
+        _DrawMode = drawMode;
+        UpdateMaterials();
+    }
+
+    private void Handler_TextureSizeChanged(string size) {
+        _TextureSizeKey = size;
+        UpdateMaterials();
+    }
+
+
+    private void Handler_ShaderChanged(string shader) {
+        _ShaderKey = shader;
+        UpdateMaterials();
+        
+    }
+
+    private void Handler_ZCullingChanged(bool zCulling) {
+        _ZcullingOn = zCulling;
+        UpdateMaterials();
+    }
+
+    private void Handler_DrawcallsCountChanged(float val) {
+        DrawsCount = (int)val;
+    }
+
+    
+    private void UpdateMaterials() {
+        
+    }
+    
+
     private void OnShader1Selected(int index) {
         _Material1.shader = Shader.Find(_AvailableShaders[index]);
-        SetupMaterials(_State == States.DrawIdentical);
+        SetupMaterials(_DrawMode == States.DrawIdentical);
     }
+
     private void OnShader2Selected(int index) {
         _Material2.shader = Shader.Find(_AvailableShaders[index]);
-        SetupMaterials(_State == States.DrawIdentical);
+        SetupMaterials(_DrawMode == States.DrawIdentical);
     }
 
     private void OnTextSelected(int i) {
         _TextureSetIndex = i;
         _Material1.mainTexture = _TextureVariants[i].Texutres[0];
         _Material2.mainTexture = _TextureVariants[i].Texutres[1];
-        SetupMaterials(_State == States.DrawIdentical);
+        SetupMaterials(_DrawMode == States.DrawIdentical);
     }
 
     protected override void OnDrawsCountChanged() {
         _Materials = new Material[DrawsCount];
-        SetState(_State);
+        SetState(_DrawMode);
     }
 
     // Update is called once per frame
@@ -74,22 +153,22 @@ public class DrawCallTestManager : BaseTestManager
         Vector3 position = Vector3.zero;
         Camera camera = Camera.main;
 
-        switch (_State) {
+        switch (_DrawMode) {
             case States.DrawInSingleMesh:
 
                 Graphics.DrawMesh(_OneDrawCallMesh, position, rotation, _Material1, 0, camera, 0);
 
                 break;
 
-            case States.DrawSameMaterial:
-
-                for (int i = 0; i < DrawsCount; i++) {
-                    position.z += 0.01f;
-                    position.x = 0.5f - (float) i / DrawsCount;
-                    Graphics.DrawMesh(_Mesh, position, rotation, _Material1, 0, camera, 0);
-                }
-
-                break;
+//            case States.DrawSameMaterial:
+//
+//                for (int i = 0; i < DrawsCount; i++) {
+//                    position.z += 0.01f;
+//                    position.x = 0.5f - (float) i / DrawsCount;
+//                    Graphics.DrawMesh(_Mesh, position, rotation, _Material1, 0, camera, 0);
+//                }
+//
+//                break;
 
             case States.DrawDifferent:
             case States.DrawIdentical:
@@ -106,12 +185,12 @@ public class DrawCallTestManager : BaseTestManager
     }
 
     protected override void Handler_SwitchTriggered() {
-        SetState(_State.Next());
+        SetState(_DrawMode.Next());
     }
 
     private void SetState(States state) {
-        _State = state;
-        switch (_State) {
+        _DrawMode = state;
+        switch (_DrawMode) {
             case States.DrawIdentical:
 
                 SetupMaterials(true);
@@ -168,7 +247,7 @@ public class DrawCallTestManager : BaseTestManager
         }
 
         base.Handler_SwitchTriggered();
-        SetSwitchName(_State.ToString());
+        SetSwitchName(_DrawMode.ToString());
     }
 
     private void SetupMaterials(bool useIdenticalMaterials) {
