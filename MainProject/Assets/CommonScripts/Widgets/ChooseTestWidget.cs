@@ -24,6 +24,8 @@ namespace DefaultNamespace.Widgets
                 _prevTest.SetActive(false);
             TestObjects[index].SetActive(true);
             _prevTest = TestObjects[index];
+
+            TestParametersWidget.Instance.SetTest(TestObjects[index].GetComponent<BaseTestManager>());
         }
     }
 }

@@ -11,16 +11,14 @@ namespace DefaultNamespace
         public static event Action OnNeedRecalculateMetrics;
         public static event Action<string> OnSwitchNameChanged;
 
-
-        public List<TestParameter> Parameters; 
+        public List<TestParameter> Parameters = new List<TestParameter>(); 
 
         protected int DrawsCount;
+        protected bool Initialized = false;
         
 
         protected virtual void OnEnable() {
             DrawsCount = SwitchWidget.DrawCount;
-            SwitchWidget.OnSwitchTriggered += () => Handler_SwitchTriggered();
-            SwitchWidget.OnDrawCountChanged += Handler_DrawCountChanged;
             if (OnNeedRecalculateMetrics != null) OnNeedRecalculateMetrics.Invoke();
             
             SetupParameters();
@@ -28,24 +26,5 @@ namespace DefaultNamespace
 
         protected abstract void SetupParameters();
 
-        private void Handler_DrawCountChanged() {
-            DrawsCount = SwitchWidget.DrawCount;
-            OnDrawsCountChanged();
-            if (OnNeedRecalculateMetrics != null) OnNeedRecalculateMetrics.Invoke();
-        }
-
-        protected abstract void OnDrawsCountChanged();
-
-        private void OnDisable() {
-            SwitchWidget.OnSwitchTriggered -= () => Handler_SwitchTriggered();            
-        }
-
-        protected virtual void Handler_SwitchTriggered() {
-            if (OnNeedRecalculateMetrics != null) OnNeedRecalculateMetrics.Invoke();
-        }
-
-        protected void SetSwitchName(string switchName) {
-            if (OnSwitchNameChanged != null) OnSwitchNameChanged.Invoke(switchName);
-        }
     }
 }

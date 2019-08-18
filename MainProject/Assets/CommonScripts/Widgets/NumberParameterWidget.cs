@@ -10,17 +10,21 @@ public class NumberParameterWidget : BaseParameterWidget
     [SerializeField] private Text _ValueText;
     public NumberParameter Parameter;
 
-    private void OnEnable() {
-        StartCoroutine(LateInit());
-    }
 
-    protected override IEnumerator LateInit() {
+    protected override void LateInit() {
         _Slider.onValueChanged.AddListener(Handler_ValueCHanged);
         _Slider.minValue = Parameter.Min;
         _Slider.maxValue = Parameter.Max;
         _Slider.value = Parameter.Value;
+        Parameter.OnSettingsChange += UpdateSettings;
         UpdateVisuals();
-        yield break;
+    }
+
+    private void UpdateSettings() {
+        _Slider.maxValue = Parameter.Max;
+        _Slider.value = Mathf.Min(_Slider.value, Parameter.Max);
+        OnPointerUp(null);
+        UpdateVisuals();
     }
 
     private void Handler_ValueCHanged(float arg0) {

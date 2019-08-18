@@ -20,14 +20,14 @@ GraphicsSettings:
     m_Mode: 1
     m_Shader: {fileID: 62, guid: 0000000000000000f000000000000000, type: 0}
   m_MotionVectors:
-    m_Mode: 1
-    m_Shader: {fileID: 75, guid: 0000000000000000f000000000000000, type: 0}
+    m_Mode: 0
+    m_Shader: {fileID: 0}
   m_LightHalo:
-    m_Mode: 1
-    m_Shader: {fileID: 105, guid: 0000000000000000f000000000000000, type: 0}
+    m_Mode: 0
+    m_Shader: {fileID: 0}
   m_LensFlare:
-    m_Mode: 1
-    m_Shader: {fileID: 102, guid: 0000000000000000f000000000000000, type: 0}
+    m_Mode: 0
+    m_Shader: {fileID: 0}
   m_AlwaysIncludedShaders:
   - {fileID: 7, guid: 0000000000000000f000000000000000, type: 0}
   - {fileID: 15104, guid: 0000000000000000f000000000000000, type: 0}
@@ -40,8 +40,27 @@ GraphicsSettings:
   - {fileID: 16002, guid: 0000000000000000f000000000000000, type: 0}
   - {fileID: 17000, guid: 0000000000000000f000000000000000, type: 0}
   - {fileID: 4800000, guid: 52f6b79e3e798954da9d96c17a24c488, type: 3}
+  - {fileID: 4800000, guid: 398282f92b505a240b3070f2a426fd38, type: 3}
+  - {fileID: 4800000, guid: c0df51eb836a3464a907e9a16ea1360f, type: 3}
+  - {fileID: 4800000, guid: 20f7a5db9d69821418b4a3d80958a125, type: 3}
+  - {fileID: 4800000, guid: d92f2ea5fa6a39b479b15532e8011526, type: 3}
+  - {fileID: 4800000, guid: d51d5c85dcca27943a209e76ffe609c2, type: 3}
+  - {fileID: 4800000, guid: 23471628a62551f4fabcc36d166cd490, type: 3}
+  - {fileID: 4800000, guid: b419432d3ba9ce34292a8f48e79fe6ec, type: 3}
+  - {fileID: 4800000, guid: 6360e797eaaebed4d8530785b19f4c47, type: 3}
+  - {fileID: 4800000, guid: 1bf9c1b0ae18c0b45af6eba87fca3949, type: 3}
   - {fileID: 4800000, guid: 8ac0faf658c6d304b93b293008ae865f, type: 3}
-  - {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 4800000, guid: ea71e6c3610aa2947b9ed206ab55e897, type: 3}
+  - {fileID: 4800000, guid: a0625f05217c4a64ba1d5245e916a437, type: 3}
+  - {fileID: 4800000, guid: 1daf9bba9ac003b44a2bd8f39e0c2aa8, type: 3}
+  - {fileID: 4800000, guid: 832a586024b90d344ae5cb5796697609, type: 3}
+  - {fileID: 4800000, guid: 01efbffe5cb489c42aa65068c8c5c2eb, type: 3}
+  - {fileID: 4800000, guid: a9b8c0278a315f94488d136dd45913cd, type: 3}
+  - {fileID: 4800000, guid: 4cfd49ebbba27c640b9a469e393759fb, type: 3}
+  - {fileID: 4800000, guid: 124e69af8a0458a4c8e7af32217f47c7, type: 3}
+  - {fileID: 4800000, guid: 5f541546dd47936479bb2cdaf41894ee, type: 3}
+  - {fileID: 4800000, guid: e0de8999556663a40acb5d8fcf92fd34, type: 3}
+  - {fileID: 4800000, guid: bc09c18265e0e864cadba6fe2bccfcee, type: 3}
   m_PreloadedShaders: []
   m_SpritesDefaultMaterial: {fileID: 10754, guid: 0000000000000000f000000000000000,
     type: 0}

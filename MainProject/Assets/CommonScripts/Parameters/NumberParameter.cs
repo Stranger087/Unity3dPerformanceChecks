@@ -11,8 +11,12 @@ namespace DefaultNamespace.Parameters
         public float Min;
         public float Max;
         public float Value;
-        public int Precision = 100;
+        public float Precision = 100;
 
         public Action<float> OnChanged;
+
+        public override void ExecuteChangedCallback() {
+            OnChanged.Invoke(Value);
+        }
     }
 }

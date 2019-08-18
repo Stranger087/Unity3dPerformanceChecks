@@ -8,4 +8,9 @@ public class FlagParameter : TestParameter
 
     public bool Checked;
     public Action<bool> OnChanged;
+    
+    
+    public override void ExecuteChangedCallback() {
+        OnChanged(Checked);
+    }
 }

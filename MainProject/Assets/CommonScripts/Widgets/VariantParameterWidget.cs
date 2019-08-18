@@ -1,18 +1,18 @@
+using System;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class VariantParameterWidget<T> : BaseParameterWidget
+public class VariantParameterWidget : BaseParameterWidget
 {
     [SerializeField] private Text _Text;
     [SerializeField] private GameObject _VariantBtnPrefab;
-    public VariantParameter<T> Parameter;
+    public VariantParameter Parameter;
 
-    protected override IEnumerator LateInit() {
+    protected override void LateInit() {
         UpdateVisuals();
-        yield break;
     }
 
     protected override void UpdateVisuals() {
@@ -20,7 +20,7 @@ public class VariantParameterWidget<T> : BaseParameterWidget
     }
 
     public override void OnPointerUp(PointerEventData eventData) {
-        var chooseWindow = GameObject.Find("ChooseWindow");
+        var chooseWindow = ChooseVariantWindow.Instance;
 
         chooseWindow.transform.GetComponentsInChildren<Button>().ToList().ForEach(_ => Destroy(_.gameObject));
 
@@ -41,4 +41,5 @@ public class VariantParameterWidget<T> : BaseParameterWidget
 
         chooseWindow.SetActive(true);
     }
+
 }

@@ -1,22 +1,22 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace DefaultNamespace.Widgets
 {
     public class FlagParameterWidget : BaseParameterWidget
     {
-        [SerializeField] private GameObject _CheckView;
+        [SerializeField] private Text _Text;
         public FlagParameter Parameter;
 
 
-        protected override IEnumerator LateInit() {
+        protected override void LateInit() {
             UpdateVisuals();
-            yield break;
         }
 
         protected override void UpdateVisuals() {
-            _CheckView.SetActive(Parameter.Checked);
+            _Text.text = Parameter.Name + (Parameter.Checked?" ✓":"");
         }
 
         public override void OnPointerUp(PointerEventData eventData) {
