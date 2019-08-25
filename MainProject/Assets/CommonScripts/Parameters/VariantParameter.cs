@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public class VariantParameter : TestParameter
 {
@@ -18,4 +19,8 @@ public class VariantParameter : TestParameter
         OnChanged(Variants[CurrentIndex]);
     }
 
+    public static List<object> ParseEnum<T>() {
+        var arr = (T[]) Enum.GetValues(typeof(T));
+        return arr.Select(_ => (object) _).ToList();
+    }
 }

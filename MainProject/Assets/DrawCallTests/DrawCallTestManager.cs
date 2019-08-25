@@ -8,10 +8,10 @@ using UnityEngine;
 
 public class DrawCallTestManager : BaseTestManager
 {
-    [SerializeField] private TextureCollection[] _TextureVariants;
-    [SerializeField] private string[] _AvailableShaders;
     [SerializeField] private GameObject Template1;
     [SerializeField] private GameObject Template2;
+
+    [SerializeField] private List<RenderTexture> _RenderTextures;
 
     private enum DrawModes
     {
@@ -20,23 +20,19 @@ public class DrawCallTestManager : BaseTestManager
         DrawInSingleMesh
     }
 
-    private const string TestSubjectTexture = "Texture";
-    private const string TestSubjectShader = "Shader";
-    private const string TestSubjectMesh = "Mesh";
-    private const string TestSubjectParameters = "Parameters";
-    private const string RenderTarget = "RenderTarget";
+    private enum TestSubjects
+    {
+        Texture,
+        Shader,
+        Mesh,
+        ShaderParameters,
+        RenderTarget
+    }
 
-    private Dictionary<string, int> _VariantsCountMax = new Dictionary<string, int>() {
-        {TestSubjectMesh, 1},
-        {TestSubjectShader, 10},
-        {TestSubjectTexture, 10},
-        {TestSubjectParameters, 100},
-        {RenderTarget, 5}
-    };
+    private Dictionary<TestSubjects, int> _VariantsCountMax;
 
     private DrawModes _DrawMode;
 
-    private Mesh _Mesh;
     private Mesh _OneDrawCallMesh;
 
     private List<Material> _SampleMaterials = new List<Material>();
@@ -55,19 +51,34 @@ public class DrawCallTestManager : BaseTestManager
     private string _PrevTextureSizeKey;
     private string _PrevShaderKey;
     private bool _PrevZcullingOn;
-    private string _TestSubject;
+    private TestSubjects _TestSubject;
 
     private NumberParameter _VariantsCountParameter;
     private Camera _Camera;
+    private string _MeshKey;
+
+    private List<Mesh> _Meshes = new List<Mesh>();
 
     // Start is called before the first frame update
     protected override void OnEnable() {
+        _VariantsCountMax = new Dictionary<TestSubjects, int>() {
+            {TestSubjects.Mesh, 5},
+            {TestSubjects.Shader, 10},
+            {TestSubjects.Texture, 10},
+            {TestSubjects.ShaderParameters, 100},
+            {TestSubjects.RenderTarget, 5}
+        };
+
+
+        for (int i = 0; i < _VariantsCountMax[TestSubjects.Mesh]; i++) {
+            _Meshes.Add(null);
+        }
+
         base.OnEnable();
 
-        _Mesh = Template1.GetComponent<MeshFilter>().sharedMesh;
         Template1.SetActive(false);
         Template2.SetActive(false);
-        
+
         _Camera = Camera.main;
 
 
@@ -104,12 +115,7 @@ public class DrawCallTestManager : BaseTestManager
 
         Parameters.Add(new VariantParameter() {
             Name = "TestSubject",
-            Variants = new List<object>() {
-                TestSubjectTexture,
-                TestSubjectShader,
-                TestSubjectMesh,
-                TestSubjectParameters
-            },
+            Variants = VariantParameter.ParseEnum<TestSubjects>(),
             OnChanged = Handler_TestSubjectChanged
         });
 
@@ -139,6 +145,18 @@ public class DrawCallTestManager : BaseTestManager
             OnChanged = Handler_TextureSizeChanged
         });
 
+        Parameters.Add(new VariantParameter() {
+            Name = "Mesh",
+            Variants = new List<object>() {
+                "quad_2",
+                "quad_512",
+                "quad_2048",
+                "quad_32768"
+            },
+            CurrentIndex = 0,
+            OnChanged = Handler_MeshSizeChanged
+        });
+
         foreach (var testParameter in Parameters) {
             testParameter.ExecuteChangedCallback();
         }
@@ -147,8 +165,13 @@ public class DrawCallTestManager : BaseTestManager
         UpdateMaterials();
     }
 
+    private void Handler_MeshSizeChanged(object obj) {
+        _MeshKey = (string) obj;
+        UpdateMaterials();
+    }
+
     private void Handler_TestSubjectChanged(object obj) {
-        _TestSubject = (string) obj;
+        _TestSubject = (TestSubjects) obj;
         _VariantsCountParameter.Max = _VariantsCountMax[_TestSubject];
         if (_VariantsCountParameter.OnSettingsChange != null)
             _VariantsCountParameter.OnSettingsChange.Invoke();
@@ -189,9 +212,13 @@ public class DrawCallTestManager : BaseTestManager
     private void UpdateMaterials() {
         //setup material samples
 
-        if(!Initialized)
+        if (!Initialized)
             return;
-        
+
+        var baseMeshPath = "Meshes/" + _MeshKey;
+
+        _Meshes[0] = Resources.Load<Mesh>(baseMeshPath + "_0");
+
         string baseShaderPath = _ShaderKey + "/" + (_ZcullingOn ? "" : "_ZWriteOff");
 
         var defaultShader = Shader.Find(baseShaderPath + "_0");
@@ -209,15 +236,25 @@ public class DrawCallTestManager : BaseTestManager
             _SampleMaterials[i].mainTexture = defaultTexture;
 
             switch (_TestSubject) {
-                case TestSubjectTexture:
+                case TestSubjects.Texture:
                     string path = "DrawCallsTest/Textures/tex_" + _TextureSizeKey + "_" + i;
                     var texture = Resources.Load<Texture>(path);
-                    Debug.Log(path+ "  "+texture);
+                    Debug.Log(path + "  " + texture);
                     _SampleMaterials[i].mainTexture = texture;
                     break;
-                case TestSubjectShader:
+                case TestSubjects.Shader:
                     _SampleMaterials[i].shader = Shader.Find(baseShaderPath + "_" + i);
-//                  _SampleMaterials[i].mainTexture = defaultTexture;
+                    break;
+
+                case TestSubjects.Mesh:
+                    _Meshes[i] = Resources.Load<Mesh>(baseMeshPath + "_" + i);
+                    break;
+                case TestSubjects.RenderTarget:
+                    if(_RenderTextures.Count<=i)
+                        _RenderTextures.Add(null);
+                    if(_RenderTextures[i]==null)
+                        _RenderTextures[i] = new RenderTexture((int) (Screen.width * 0.75f), (int) (Screen.height * 0.75f), 0, RenderTextureFormat.ARGB32);
+                    
                     break;
             }
         }
@@ -231,8 +268,9 @@ public class DrawCallTestManager : BaseTestManager
                 bool identical = _DrawMode == DrawModes.DrawIdentical;
 
                 for (int i = 0; i < DrawsCount; i++) {
-
                     int variantIndex = i % _VariantsCount;
+                    if (identical)
+                        variantIndex = 0;
                     var mat = _SampleMaterials[variantIndex];
 
                     if (_Materials.Count == i) {
@@ -257,13 +295,14 @@ public class DrawCallTestManager : BaseTestManager
 
     // Update is called once per frame
     void Update() {
-        
-        if(!Initialized)
+        if (!Initialized)
             return;
-        
+
         Quaternion rotation = Quaternion.identity;
         Vector3 position = Vector3.zero;
-        
+
+        var mesh = _Meshes[0];
+        var material = _Materials[0];
 
         switch (_DrawMode) {
             case DrawModes.DrawInSingleMesh:
@@ -285,12 +324,27 @@ public class DrawCallTestManager : BaseTestManager
             case DrawModes.DrawDifferent:
             case DrawModes.DrawIdentical:
 
+
                 for (int i = 0; i < DrawsCount; i++) {
+                    if (_DrawMode == DrawModes.DrawDifferent) {
+                        switch (_TestSubject) {
+                            case TestSubjects.Mesh:
+                                mesh = _Meshes[i % _VariantsCount];
+                                break;
+                            case TestSubjects.RenderTarget:
+                                int textureIndex = i % (_VariantsCount + 1);
+                                _Camera.targetTexture = textureIndex == 0 ? null : _RenderTextures[textureIndex - 1];
+                                break;
+                            default:
+                                material = _Materials[i];
+                                break;
+                        }
+                    }
+
                     position.z += 0.01f;
                     position.x = 0.5f - (float) i / DrawsCount;
-                    Graphics.DrawMesh(_Mesh, position, rotation, _Materials[i], 0, _Camera, 0);
+                    Graphics.DrawMesh(mesh, position, rotation, material, 0, _Camera, 0);
                 }
-
 
                 break;
         }
@@ -300,10 +354,12 @@ public class DrawCallTestManager : BaseTestManager
     private void RecreateSingleMesh() {
         _OneDrawCallMesh = new Mesh();
 
-        var triangles = _Mesh.triangles.ToList();
-        var vertices = _Mesh.vertices.ToList();
-        var uvs = _Mesh.uv.ToList();
-        var normals = _Mesh.normals.ToList();
+        var mesh = _Meshes[0];
+
+        var triangles = mesh.triangles.ToList();
+        var vertices = mesh.vertices.ToList();
+        var uvs = mesh.uv.ToList();
+        var normals = mesh.normals.ToList();
 
         var rTriangles = new List<int>(DrawsCount * 2);
         var rVertices = new List<Vector3>(DrawsCount * 4);
