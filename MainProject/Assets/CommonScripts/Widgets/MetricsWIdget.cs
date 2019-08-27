@@ -5,6 +5,9 @@ using UnityEngine.UI;
 
 public class MetricsWIdget : MonoBehaviour
 {
+
+    public static bool PauseMeasures;
+    
     [SerializeField] private Text _Text;
 
     private const int CALCULATION_PERIOD = 250;
@@ -28,34 +31,36 @@ public class MetricsWIdget : MonoBehaviour
         float deltaTime = currentTime - _PrevTime;
         _PrevTime = currentTime;
 
-        //store delta time values
-        if (_FrameTimes.Count < CALCULATION_PERIOD) {
-            _FrameTimes.Add(deltaTime);
-        }
-        else {
-            _FrameTimes[_ReplaceIndex] = deltaTime;
-            if (++_ReplaceIndex == CALCULATION_PERIOD - 1) {
-                _ReplaceIndex = 0;
+        if (!PauseMeasures) {
+            //store delta time values
+            if (_FrameTimes.Count < CALCULATION_PERIOD) {
+                _FrameTimes.Add(deltaTime);
             }
-        }
-
-        //calculate medium frame time
-        float totalTime = 0;
-        for (int i = 0; i < _FrameTimes.Count; i++) {
-            totalTime += _FrameTimes[i];
-        }
-
-        float frameTime = Mathf.Floor(totalTime / _FrameTimes.Count * 1000f*PERCISION_MULTIPLIER) / PERCISION_MULTIPLIER;
-
-        if (_HideUntilReplaceIndex >= 0) {
-            if (_HideUntilReplaceIndex == _ReplaceIndex) {
-                _HideUntilReplaceIndex = -1;
+            else {
+                _FrameTimes[_ReplaceIndex] = deltaTime;
+                if (++_ReplaceIndex == CALCULATION_PERIOD - 1) {
+                    _ReplaceIndex = 0;
+                }
             }
 
-            
-        }
-        else {
-            _Text.text = SystemInfo.processorFrequency+ " frame time: "+ frameTime;
+            //calculate medium frame time
+            float totalTime = 0;
+            for (int i = 0; i < _FrameTimes.Count; i++) {
+                totalTime += _FrameTimes[i];
+            }
+
+            float frameTime = Mathf.Floor(totalTime / _FrameTimes.Count * 1000f * PERCISION_MULTIPLIER) / PERCISION_MULTIPLIER;
+
+            if (_HideUntilReplaceIndex >= 0) {
+                if (_HideUntilReplaceIndex == _ReplaceIndex) {
+                    _HideUntilReplaceIndex = -1;
+                }
+
+
+            }
+            else {
+                _Text.text =  " frame time: " + frameTime;
+            }
         }
     }
 

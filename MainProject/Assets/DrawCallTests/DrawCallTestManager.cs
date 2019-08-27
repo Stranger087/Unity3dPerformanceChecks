@@ -13,6 +13,8 @@ public class DrawCallTestManager : BaseTestManager
 
     [SerializeField] private List<RenderTexture> _RenderTextures;
 
+    private TimeOrFrameLimit _CooldownTimer;
+    
     private enum DrawModes
     {
         DrawDifferent,
@@ -58,9 +60,13 @@ public class DrawCallTestManager : BaseTestManager
     private string _MeshKey;
 
     private List<Mesh> _Meshes = new List<Mesh>();
+    private CameraEvents _CameraEvents;
 
     // Start is called before the first frame update
     protected override void OnEnable() {
+        _Camera = Camera.main;
+
+
         _VariantsCountMax = new Dictionary<TestSubjects, int>() {
             {TestSubjects.Mesh, 5},
             {TestSubjects.Shader, 10},
@@ -79,8 +85,13 @@ public class DrawCallTestManager : BaseTestManager
         Template1.SetActive(false);
         Template2.SetActive(false);
 
-        _Camera = Camera.main;
-
+        Application.targetFrameRate = 60;
+        _CooldownTimer = new TimeOrFrameLimit() {
+            MinFrame = 600,
+            MaxFrame = 1200,
+            MinTime = 10f,
+            MaxTime = 20f
+        };
 
 //        ChooseVariantWidget.Instance.RegisterVariation(OnTextSelected, "Texture Variants", _TextureVariants.Select(_ => _.Name).ToArray());
 //        ChooseVariantWidget.Instance.RegisterVariation(OnShader1Selected, "Shader1", _AvailableShaders);
@@ -109,7 +120,7 @@ public class DrawCallTestManager : BaseTestManager
 
         Parameters.Add(new VariantParameter() {
             Name = "Draw Mode",
-            Variants = ((DrawModes[]) Enum.GetValues(typeof(DrawModes))).Select(enumValue => (object) enumValue).ToList(),
+            Variants = VariantParameter.ParseEnum<DrawModes>(),
             OnChanged = Handler_DrawModeChanged
         });
 
@@ -175,8 +186,22 @@ public class DrawCallTestManager : BaseTestManager
         _VariantsCountParameter.Max = _VariantsCountMax[_TestSubject];
         if (_VariantsCountParameter.OnSettingsChange != null)
             _VariantsCountParameter.OnSettingsChange.Invoke();
+        if (_TestSubject == TestSubjects.RenderTarget) {
+            Debug.Log("subsctibed");
+            _Camera.forceIntoRenderTexture = true;
+//            _CameraEvents.OnWillRenderObjectEvent += Handler_CameraWillRenderObject;
+        }
+        else {
+            Debug.Log("ubsubsctibed");
+//            _CameraEvents.OnWillRenderObjectEvent -= Handler_CameraWillRenderObject;
+            _Camera.forceIntoRenderTexture = false;
+
+            _Camera.targetTexture = null;
+        }
+
         UpdateMaterials();
     }
+
 
     private void Handler_VariantsCountChanged(float val) {
         _VariantsCount = (int) val;
@@ -250,11 +275,11 @@ public class DrawCallTestManager : BaseTestManager
                     _Meshes[i] = Resources.Load<Mesh>(baseMeshPath + "_" + i);
                     break;
                 case TestSubjects.RenderTarget:
-                    if(_RenderTextures.Count<=i)
+                    if (_RenderTextures.Count <= i)
                         _RenderTextures.Add(null);
-                    if(_RenderTextures[i]==null)
+                    if (_RenderTextures[i] == null)
                         _RenderTextures[i] = new RenderTexture((int) (Screen.width * 0.75f), (int) (Screen.height * 0.75f), 0, RenderTextureFormat.ARGB32);
-                    
+
                     break;
             }
         }
@@ -298,6 +323,24 @@ public class DrawCallTestManager : BaseTestManager
         if (!Initialized)
             return;
 
+        _CooldownTimer.Beat(Time.deltaTime);
+
+        if (_CooldownTimer.Changed) {
+            switch (_CooldownTimer.CurrentPhase) {
+                case TimeOrFrameLimit.Phases.Render:
+                    MetricsWIdget.PauseMeasures = false;
+                    break;
+                case TimeOrFrameLimit.Phases.RenderEnd:
+                    MetricsWIdget.PauseMeasures = true;
+                    break;
+            }
+
+        }
+
+        if (_CooldownTimer.CurrentPhase == TimeOrFrameLimit.Phases.Cooldown) {
+            return; //no rendering to cool down device
+        }
+
         Quaternion rotation = Quaternion.identity;
         Vector3 position = Vector3.zero;
 
@@ -332,8 +375,6 @@ public class DrawCallTestManager : BaseTestManager
                                 mesh = _Meshes[i % _VariantsCount];
                                 break;
                             case TestSubjects.RenderTarget:
-                                int textureIndex = i % (_VariantsCount + 1);
-                                _Camera.targetTexture = textureIndex == 0 ? null : _RenderTextures[textureIndex - 1];
                                 break;
                             default:
                                 material = _Materials[i];
@@ -348,6 +389,18 @@ public class DrawCallTestManager : BaseTestManager
 
                 break;
         }
+    }
+
+    private int _DrawIndex;
+
+    private void Handler_CameraWillRenderObject() {
+        Debug.Log(_DrawIndex);
+        if (_DrawIndex > 0) {
+            int textureIndex = _DrawIndex % (_VariantsCount + 1);
+            _Camera.targetTexture = textureIndex == 0 ? null : _RenderTextures[textureIndex - 1];
+        }
+
+        _DrawIndex++;
     }
 
 
